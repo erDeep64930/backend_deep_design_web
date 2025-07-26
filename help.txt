@@ -1,0 +1,4 @@
+models:
+
+Course.js
+---thumbnail === i have used
