@@ -97,3 +97,70 @@ exports.capturePayment = async (req, res) => {
 
   // return response
 };
+
+// verify Signature of Razorpay and server
+
+exports.verifySignature = async (req, res) => {
+  const webhookSecret = "123456789";
+
+  const signature = req.headers["x-razorpay-signature"];
+
+  const shasun = crypto.createHmac("sha256", webhookSecret);
+
+  shasun.update(JSON.stringify(req.body));
+
+  const digest = shasun.digest("hex");
+
+  if (signature === digit) {
+    console.log("payment is authorised");
+    const { course, userId } = req.body.payload.payment.entity.notes;
+    try {
+      // fulfill the action
+      // find the coursed and enrolled the student in it
+      const enrolledCourse = await courseEnrollmentEnail.findOneAndUpdate(
+        { _id: courseId },
+        { $push: { studentsEnrolled: userId } },
+        { new: true }
+      );
+
+      if (!enrolledCourse) {
+        return res.status(500).json({
+          success: false,
+          message: "course not found",
+        });
+      }
+      console.log(enrolledCourse);
+
+      // find the student and add  the course to their list of enrolled courses
+
+      const enrolledStudent = await Usre.findOneAndUpdate(
+        { _id: userId },
+        { $push: { courses: courseId } },
+        { new: true }
+      );
+      console.log(enrolledStudent);
+
+      //   send the mail / confirmation mail send to the user
+      const emailResponse = await mailSender(
+        enrolledStudent.email,
+        "Congratulation you are enrolled into deep design web"
+      );
+      console.log(emailResponse);
+      return res.status(200).json({
+        success: true,
+        message: "signature verified and course added",
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  } else {
+    return res.status(400).json({
+      success: false,
+      message: "invalid request",
+    });
+  }
+};

@@ -89,7 +89,6 @@ exports.createCourse = async (req, res) => {
       message: "Course created successfully",
       course: newCourse,
     });
-
   } catch (error) {
     console.error("Error creating course:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -99,30 +98,75 @@ exports.createCourse = async (req, res) => {
 // get all course handler function
 
 exports.getAllCourses = async (req, res) => {
-    try {
-        // fetch all courses
-        const allCourses = await Course.find({},
-        {
-            courseName: true,
-            courseDescription: trusted,
-            price: true,
-            thumbnail: true,
-            tag: true,
-            instructor: true,
-            ratingAndReviews: true,
-            whatYouWillLearn: true,
-            studentsEnrolled: true,
-            totalHours: true,
-        }).populate("instructor").exec();
+  try {
+    // fetch all courses
+    const allCourses = await Course.find(
+      {},
+      {
+        courseName: true,
+        courseDescription: trusted,
+        price: true,
+        thumbnail: true,
+        tag: true,
+        instructor: true,
+        ratingAndReviews: true,
+        whatYouWillLearn: true,
+        studentsEnrolled: true,
+        totalHours: true,
+      }
+    )
+      .populate("instructor")
+      .exec();
 
-        // return response
-        res.status(200).json({
-            success: true,
-            message: "Courses fetched successfully",
-            courses: allCourses,
-        });
-    } catch (error) {
-        console.error("Error fetching courses:", error);
-        res.status(500).json({ message: "Internal server error" });
+    // return response
+    res.status(200).json({
+      success: true,
+      message: "Courses fetched successfully",
+      courses: allCourses,
+    });
+  } catch (error) {
+    console.error("Error fetching courses:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// get course details
+
+exports.getCourseDetails = async (req, res) => {
+  try {
+    // get id
+    const { courseId } = req.body;
+    //  find course details
+    const courseDetails = await Course.findOne({ _id: courseId })
+      .populate({
+        path: "instructor",
+        populate: {
+          path: "additionalDetails",
+        },
+      })
+      .populate("category")
+      .populate("ratingAndReviews")
+      .populate({
+        path: "courseContent",
+        populate: {
+          path: "subSection",
+        },
+      })
+      .exec();
+
+    if (!courseDetails) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Course not found" });
     }
-}
+
+    res.status(200).json({
+      success: true,
+      message: "Course details fetched successfully",
+      course: courseDetails,
+    });
+  } catch (error) {
+    console.error("Error fetching course details:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
